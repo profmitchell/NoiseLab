@@ -1,18 +1,15 @@
 """Operators for Procedural Noise Lab (Infinite Noise Lab)."""
 
 import bpy
-from bpy.props import StringProperty, IntProperty, BoolProperty, FloatProperty
+from bpy.props import StringProperty, IntProperty, BoolProperty
 from bpy.types import Operator
 
 from .custom_4d_noise import build_custom_4d_noise, GROUP_NAME as CUSTOM_4D_NAME
 from .formula_builder import build_formula_group
-from . import recipe_infinite_4d
-from . import recipe_domain_warp
-from . import recipe_animated_mask
-from . import recipe_liquid_marble
 from .demo_material import create_demo_material, create_demo_geometry_setup
-from .presets_data import PRESETS, flat_presets
-from .presets_io import save_preset as _save_preset_json, load_user_presets
+from .presets_data import PRESETS
+from .presets_io import save_preset as _save_preset_json
+from .recipe_registry import RECIPES, RECIPES_BY_KEY, recipe_for_group, recipe_for_target_name
 from .animation import (
     animate_time_keyframes, clear_time_animation, add_time_driver,
 )
@@ -71,6 +68,22 @@ def _policy(context):
     return context.scene.pnl_settings.duplicate_policy
 
 
+def _build_registered_recipe(context, operator, recipe_key):
+    recipe = RECIPES_BY_KEY[recipe_key]
+    tree_type = _get_tree_type(context)
+    group, reused = recipe.build(policy=_policy(context), tree_type=tree_type)
+    inserted = _insert_group_into_active_editor(context, group)
+    tag = "reused" if reused else "built"
+    if inserted is None:
+        operator.report(
+            {'INFO'},
+            f"{recipe.display_name} {tag} as '{group.name}'. Open a compatible node tree to insert it.",
+        )
+    else:
+        operator.report({'INFO'}, f"{recipe.display_name} {tag} and inserted.")
+    return {'FINISHED'}
+
+
 # =========================================================================
 # Create node groups
 # =========================================================================
@@ -81,11 +94,7 @@ class PNL_OT_build_infinite_4d(Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        group, reused = recipe_infinite_4d.build(policy=_policy(context), tree_type=_get_tree_type(context))
-        node = _insert_group_into_active_editor(context, group)
-        tag = "reused" if reused else "built"
-        self.report({'INFO'}, f"{recipe_infinite_4d.DISPLAY_NAME} {tag}.")
-        return {'FINISHED'}
+        return _build_registered_recipe(context, self, "INFINITE_4D")
 
 
 class PNL_OT_build_domain_warp(Operator):
@@ -95,11 +104,7 @@ class PNL_OT_build_domain_warp(Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        group, reused = recipe_domain_warp.build(policy=_policy(context), tree_type=_get_tree_type(context))
-        _insert_group_into_active_editor(context, group)
-        tag = "reused" if reused else "built"
-        self.report({'INFO'}, f"{recipe_domain_warp.DISPLAY_NAME} {tag}.")
-        return {'FINISHED'}
+        return _build_registered_recipe(context, self, "DOMAIN_WARP")
 
 
 class PNL_OT_build_animated_mask(Operator):
@@ -109,11 +114,7 @@ class PNL_OT_build_animated_mask(Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        group, reused = recipe_animated_mask.build(policy=_policy(context), tree_type=_get_tree_type(context))
-        _insert_group_into_active_editor(context, group)
-        tag = "reused" if reused else "built"
-        self.report({'INFO'}, f"{recipe_animated_mask.DISPLAY_NAME} {tag}.")
-        return {'FINISHED'}
+        return _build_registered_recipe(context, self, "ANIMATED_MASK")
 
 
 class PNL_OT_build_liquid_marble(Operator):
@@ -123,11 +124,7 @@ class PNL_OT_build_liquid_marble(Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        group, reused = recipe_liquid_marble.build(policy=_policy(context), tree_type=_get_tree_type(context))
-        _insert_group_into_active_editor(context, group)
-        tag = "reused" if reused else "built"
-        self.report({'INFO'}, f"{recipe_liquid_marble.DISPLAY_NAME} {tag}.")
-        return {'FINISHED'}
+        return _build_registered_recipe(context, self, "LIQUID_MARBLE")
 
 
 class PNL_OT_build_custom_4d(Operator):
@@ -155,24 +152,24 @@ class PNL_OT_demo_material(Operator):
     def execute(self, context):
         target = context.scene.pnl_settings.demo_target
         tree_type = _get_tree_type(context)
-        
-        # Suffix for Geo if needed
-        actual_target = target if tree_type == 'ShaderNodeTree' else target + "_Geo"
-        
-        # Ensure the group exists first
-        if target == "INL_Infinite_4D_Noise":
-            recipe_infinite_4d.build(policy='REUSE', tree_type=tree_type)
-        elif target == "INL_Domain_Warped_Noise":
-            recipe_domain_warp.build(policy='REUSE', tree_type=tree_type)
-        elif target == "INL_Animated_Mask_Noise":
-            recipe_animated_mask.build(policy='REUSE', tree_type=tree_type)
-        elif target == "INL_Liquid_Marble_Noise":
-            recipe_liquid_marble.build(policy='REUSE', tree_type=tree_type)
-            
+        recipe = recipe_for_target_name(target)
+        if recipe is None:
+            self.report({'ERROR'}, f"Unknown demo target '{target}'.")
+            return {'CANCELLED'}
+
+        group, _reused = recipe.build(policy='REUSE', tree_type=tree_type)
+
         if tree_type == 'ShaderNodeTree':
-            res, msg = create_demo_material(actual_target)
+            res, msg = create_demo_material(group.name)
         else:
-            res, msg = create_demo_geometry_setup(actual_target)
+            s = context.scene.pnl_settings
+            res, msg = create_demo_geometry_setup(
+                group.name,
+                mode=s.geo_demo_mode,
+                grid_size=s.geo_grid_size,
+                grid_vertices=s.geo_grid_vertices,
+                displacement_strength=s.geo_displacement_strength,
+            )
             
         level = 'INFO' if res else 'ERROR'
         self.report({level}, msg)
@@ -203,6 +200,13 @@ class PNL_OT_apply_preset(Operator):
         node = _active_group_node(context)
         if node is None:
             self.report({'WARNING'}, "Select an INL group node first.")
+            return {'CANCELLED'}
+        recipe = recipe_for_group(node.node_tree)
+        if recipe and preset.get("target") != recipe.internal_name:
+            self.report(
+                {'WARNING'},
+                f"Preset targets {preset.get('target')}; selected node is {recipe.internal_name}.",
+            )
             return {'CANCELLED'}
 
         applied = 0
@@ -306,10 +310,15 @@ class PNL_OT_randomize(Operator):
         if s.lock_warp:      locks.add("WARP")
         if s.lock_output:    locks.add("OUTPUT")
         if s.lock_animation: locks.add("ANIMATION")
-        randomize_inputs(node, mutate=self.mutate,
-                         mutate_pct=s.mutate_amount, locked_categories=locks)
+        changed, skipped = randomize_inputs(
+            node,
+            mutate=self.mutate,
+            mutate_pct=s.mutate_amount,
+            locked_categories=locks,
+        )
         label = "Mutated" if self.mutate else "Randomized"
-        self.report({'INFO'}, f"{label} group inputs.")
+        lock_note = f" ({skipped} locked)" if skipped else ""
+        self.report({'INFO'}, f"{label} {changed} group inputs{lock_note}.")
         return {'FINISHED'}
 
 
@@ -421,10 +430,14 @@ def menu_draw_textures(self, context):
     layout = self.layout
     layout.separator()
     layout.label(text="Noise Lab", icon='FORCE_TURBULENCE')
-    layout.operator("pnl.build_infinite_4d", text="Infinite 4D Noise", icon='FORCE_TURBULENCE')
-    layout.operator("pnl.build_domain_warp", text="Domain Warped Noise", icon='MOD_WARP')
-    layout.operator("pnl.build_animated_mask", text="Animated Mask Noise", icon='MOD_MASK')
-    layout.operator("pnl.build_liquid_marble", text="Liquid Marble Noise", icon='MOD_OCEAN')
+    operator_ids = {
+        "INFINITE_4D": "pnl.build_infinite_4d",
+        "DOMAIN_WARP": "pnl.build_domain_warp",
+        "ANIMATED_MASK": "pnl.build_animated_mask",
+        "LIQUID_MARBLE": "pnl.build_liquid_marble",
+    }
+    for recipe in RECIPES:
+        layout.operator(operator_ids[recipe.key], text=recipe.display_name, icon=recipe.icon)
     layout.operator("pnl.build_custom_4d", text="Custom 4D Noise", icon='TEXTURE')
 
 

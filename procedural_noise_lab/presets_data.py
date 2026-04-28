@@ -10,6 +10,7 @@ PRESET_CATEGORIES = [
     ("SURFACE",  "Surface Imperfections"),
     ("MOTION",   "Video / Motion Design"),
     ("DISPLACE", "Displacement"),
+    ("GEOMETRY", "Geometry Nodes"),
 ]
 
 # {category: [{name, target_group, values, description, animation_hint}, …]}
@@ -154,6 +155,52 @@ PRESETS = {
             "anim": "Animate Time slowly for molten motion.",
         },
     ],
+    "GEOMETRY": [
+        {
+            "name": "Grid Dunes",
+            "target": "INL_Infinite_4D_Noise",
+            "values": {"Scale": 2.8, "Detail": 9.0, "Roughness": 0.62,
+                       "Warp Amount": 1.8, "Warp Scale": 1.6,
+                       "Fine Detail Amount": 0.25, "Fine Detail Scale": 5.0,
+                       "Contrast": 1.1, "Output Min": -0.25, "Output Max": 1.0},
+            "desc": "Broad displaced grid terrain with subtle fine breakup.",
+            "anim": "Use Geometry demo Source: Grid; raise Strength for taller dunes.",
+        },
+        {
+            "name": "Pebbled Sheet",
+            "target": "INL_Infinite_4D_Noise",
+            "values": {"Scale": 22.0, "Detail": 6.0, "Roughness": 0.5,
+                       "Warp Amount": 0.35, "Contrast": 2.2,
+                       "Threshold": 0.48, "Fine Detail Amount": 0.35},
+            "desc": "Small surface bumps for generated grids or dense meshes.",
+        },
+        {
+            "name": "Warped Ridge Field",
+            "target": "INL_Domain_Warped_Noise",
+            "values": {"Base Scale": 5.5, "Base Detail": 11.0,
+                       "Warp Scale": 2.2, "Warp Detail": 6.0,
+                       "Warp Amount": 3.2, "Contrast": 1.8,
+                       "Threshold": 0.42},
+            "desc": "Strong directional terrain breakup from the warp field.",
+        },
+        {
+            "name": "Soft Attribute Mask",
+            "target": "INL_Animated_Mask_Noise",
+            "values": {"Scale": 7.0, "Speed": 0.35, "Detail": 8.0,
+                       "Threshold": 0.52, "Softness": 0.18,
+                       "Contrast": 1.4, "Edge Width": 0.06},
+            "desc": "Stored in Geometry Nodes as the inl_mask point attribute.",
+            "anim": "Animate Time on the modifier or group node for evolving attributes.",
+        },
+        {
+            "name": "Marble Relief Grid",
+            "target": "INL_Liquid_Marble_Noise",
+            "values": {"Scale": 6.0, "Warp Amount": 3.6, "Warp Scale": 2.4,
+                       "Wave Scale": 9.5, "Wave Distortion": 7.0,
+                       "Detail": 5.0, "Roughness": 0.58},
+            "desc": "Swirled relief pattern for generated grids.",
+        },
+    ],
 }
 
 
@@ -166,5 +213,8 @@ def flat_presets():
     return out
 
 
-def preset_names_for_category(cat_id):
-    return [(p["name"], p["name"], p.get("desc", "")) for p in PRESETS.get(cat_id, [])]
+def preset_names_for_category(cat_id, target=None):
+    presets = PRESETS.get(cat_id, [])
+    if target:
+        presets = [p for p in presets if p.get("target") == target]
+    return [(p["name"], p["name"], p.get("desc", "")) for p in presets]

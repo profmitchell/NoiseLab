@@ -107,7 +107,9 @@ def build(policy='REBUILD', tree_type='ShaderNodeTree'):
     _link(tree, g_in.outputs["Wave Scale"], wave.inputs["Scale"])
     _link(tree, g_in.outputs["Wave Distortion"], wave.inputs["Distortion"])
     _link(tree, g_in.outputs["Detail"], wave.inputs["Detail"])
-    _link(tree, g_in.outputs["Roughness"], wave.inputs["Roughness"])
+    detail_roughness = wave.inputs.get("Roughness") or wave.inputs.get("Detail Roughness")
+    if detail_roughness:
+        _link(tree, g_in.outputs["Roughness"], detail_roughness)
 
     # 4. Output
     _link(tree, wave.outputs["Fac"], g_out.inputs["Fac"])

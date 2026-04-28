@@ -1,7 +1,7 @@
 bl_info = {
     "name": "Procedural Noise Lab",
     "author": "Cohen Concepts",
-    "version": (0, 2, 0),
+    "version": (0, 3, 0),
     "blender": (4, 0, 0),
     "location": "Shader Editor > N Panel > Noise Lab",
     "description": (

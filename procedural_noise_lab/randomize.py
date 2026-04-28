@@ -37,8 +37,11 @@ def randomize_inputs(group_node, mutate=False, mutate_pct=0.2,
 
     rng = random.Random(rng_seed)
 
+    changed = 0
+    skipped = 0
     for inp in group_node.inputs:
         if inp.name in locked_names:
+            skipped += 1
             continue
         if inp.type != 'VALUE':
             continue
@@ -50,3 +53,5 @@ def randomize_inputs(group_node, mutate=False, mutate_pct=0.2,
         else:
             new_val = rng.uniform(lo, hi)
         inp.default_value = max(lo, min(hi, new_val))
+        changed += 1
+    return changed, skipped

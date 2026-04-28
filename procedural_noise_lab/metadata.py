@@ -1,6 +1,6 @@
 """Version metadata stamped onto every generated node group (PRD §27)."""
 
-GENERATOR_VERSION = (0, 2, 0)
+GENERATOR_VERSION = (0, 3, 0)
 
 PROP_RECIPE_ID = "inl_recipe_id"
 PROP_RECIPE_VERSION = "inl_recipe_version"

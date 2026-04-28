@@ -46,11 +46,16 @@ class PNL_PT_create(_PNL_PanelBase, Panel):
     def draw(self, context):
         layout = self.layout
         s = context.scene.pnl_settings
+        from .recipe_registry import RECIPES
 
-        layout.operator("pnl.build_infinite_4d", icon='FORCE_TURBULENCE')
-        layout.operator("pnl.build_domain_warp", icon='MOD_WARP')
-        layout.operator("pnl.build_animated_mask", icon='MOD_MASK')
-        layout.operator("pnl.build_liquid_marble", icon='MOD_OCEAN')
+        operator_ids = {
+            "INFINITE_4D": "pnl.build_infinite_4d",
+            "DOMAIN_WARP": "pnl.build_domain_warp",
+            "ANIMATED_MASK": "pnl.build_animated_mask",
+            "LIQUID_MARBLE": "pnl.build_liquid_marble",
+        }
+        for recipe in RECIPES:
+            layout.operator(operator_ids[recipe.key], text=f"Add {recipe.display_name}", icon=recipe.icon)
         layout.separator()
         layout.operator("pnl.build_custom_4d", icon='TEXTURE')
         layout.separator()
@@ -74,7 +79,15 @@ class PNL_PT_demo(_PNL_PanelBase, Panel):
         
         op_text = "Create Demo Setup" if is_geo else "Create Demo Material"
         op_icon = 'MODIFIER' if is_geo else 'MATERIAL'
-        
+
+        if is_geo:
+            layout.prop(s, "geo_demo_mode", text="Source")
+            if s.geo_demo_mode == 'GRID':
+                row = layout.row(align=True)
+                row.prop(s, "geo_grid_size")
+                row.prop(s, "geo_grid_vertices", text="Vertices")
+            layout.prop(s, "geo_displacement_strength", slider=True)
+
         layout.operator("pnl.demo_material", text=op_text, icon=op_icon)
 
 
@@ -89,22 +102,36 @@ class PNL_PT_presets(_PNL_PanelBase, Panel):
     def draw(self, context):
         layout = self.layout
         s = context.scene.pnl_settings
+        from .recipe_registry import recipe_for_group
 
         layout.prop(s, "preset_category", text="")
         layout.prop(s, "preset_name", text="")
+
+        recipe = None
+        active = context.space_data.edit_tree.nodes.active if context.space_data.edit_tree else None
+        if active and active.type == 'GROUP':
+            recipe = recipe_for_group(active.node_tree)
+        if recipe:
+            row = layout.row()
+            row.scale_y = 0.75
+            row.label(text=f"Filtered for {recipe.display_name}", icon='FILTER')
 
         # Show preset description if available
         from .presets_data import PRESETS
         cat_presets = PRESETS.get(s.preset_category, [])
         desc = ""
+        anim = ""
         for p in cat_presets:
             if p["name"] == s.preset_name:
                 desc = p.get("desc", "")
+                anim = p.get("anim", "")
                 break
         if desc:
             box = layout.box()
             box.scale_y = 0.7
             box.label(text=desc, icon='INFO')
+            if anim:
+                box.label(text=anim, icon='TIME')
 
         row = layout.row(align=True)
         row.operator("pnl.apply_preset", icon='CHECKMARK')

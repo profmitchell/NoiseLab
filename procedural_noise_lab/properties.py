@@ -7,6 +7,7 @@ from bpy.types import PropertyGroup
 
 from .formula_builder import OP_TYPES
 from .presets_data import PRESET_CATEGORIES, PRESETS, preset_names_for_category
+from .recipe_registry import DEMO_TARGET_ITEMS, recipe_for_group
 
 
 # ---------------------------------------------------------------------------
@@ -18,7 +19,15 @@ def _preset_category_items(self, context):
 
 def _preset_name_items(self, context):
     s = context.scene.pnl_settings
-    return preset_names_for_category(s.preset_category) or [("NONE", "(none)", "")]
+    target = None
+    space = getattr(context, "space_data", None)
+    if space and space.type == 'NODE_EDITOR' and space.edit_tree:
+        active = space.edit_tree.nodes.active
+        if active and active.type == 'GROUP':
+            recipe = recipe_for_group(active.node_tree)
+            if recipe:
+                target = recipe.internal_name
+    return preset_names_for_category(s.preset_category, target) or [("NONE", "(none)", "")]
 
 
 # ---------------------------------------------------------------------------
@@ -44,7 +53,7 @@ class PNL_Settings(PropertyGroup):
         name="Duplicate Policy",
         items=[
             ('REUSE',   "Reuse",   "Reuse existing group if it already exists"),
-            ('REBUILD', "Rebuild", "Wipe and rebuild the group in place"),
+            ('REBUILD', "Rebuild Safe", "Rebuild an unused group, or create a new copy if the existing group is in use"),
             ('SUFFIX',  "New Copy","Always create a new copy (.001 etc)"),
         ],
         default='REUSE',
@@ -54,14 +63,39 @@ class PNL_Settings(PropertyGroup):
     # Demo material target
     demo_target: EnumProperty(
         name="Target Group",
-        items=[
-            ('INL_Infinite_4D_Noise',   "Infinite 4D Noise",   ""),
-            ('INL_Domain_Warped_Noise', "Domain Warped Noise", ""),
-            ('INL_Animated_Mask_Noise', "Animated Mask Noise", ""),
-            ('INL_Liquid_Marble_Noise', "Liquid Marble Noise", ""),
-        ],
+        items=DEMO_TARGET_ITEMS,
         default='INL_Infinite_4D_Noise',
         description="Target node group to generate a demo material for",
+    )
+    geo_demo_mode: EnumProperty(
+        name="Geometry Source",
+        items=[
+            ('GRID', "Grid", "Generate a high-resolution demo grid"),
+            ('ACTIVE', "Active Mesh", "Use and displace the active object's incoming geometry"),
+        ],
+        default='GRID',
+        description="Geometry source for one-click Geometry Nodes demo setups",
+    )
+    geo_grid_size: FloatProperty(
+        name="Grid Size",
+        default=2.0,
+        min=0.1,
+        max=100.0,
+        description="Generated grid size for Geometry Nodes demos",
+    )
+    geo_grid_vertices: IntProperty(
+        name="Grid Vertices",
+        default=100,
+        min=2,
+        max=1000,
+        description="Vertex count per axis for generated Geometry Nodes demo grids",
+    )
+    geo_displacement_strength: FloatProperty(
+        name="Strength",
+        default=0.12,
+        min=-10.0,
+        max=10.0,
+        description="Default normal displacement strength for Geometry Nodes demos",
     )
 
     # Preset system

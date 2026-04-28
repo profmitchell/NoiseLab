@@ -39,7 +39,9 @@ def get_or_create_group(name, tree_type='ShaderNodeTree', policy='REBUILD'):
     policy:
       - 'REUSE'   : if a matching group exists, return it untouched (caller
                     should detect this and skip building).
-      - 'REBUILD' : if it exists, wipe and rebuild in place (preserves users).
+      - 'REBUILD' : if an unused match exists, wipe and rebuild it. If the
+                    existing group has users, create a fresh suffixed copy so
+                    other materials are not changed unexpectedly.
       - 'SUFFIX'  : always create a fresh group (Blender adds .001 etc).
     """
     existing = bpy.data.node_groups.get(name)
@@ -49,8 +51,12 @@ def get_or_create_group(name, tree_type='ShaderNodeTree', policy='REBUILD'):
         return existing, True  # (group, reused)
     if policy == 'SUFFIX':
         return bpy.data.node_groups.new(name, tree_type), False
-    # REBUILD (default)
+    # REBUILD (default). Do not mutate a group already used by materials,
+    # modifiers, or appended node trees; rebuilding in place would change every
+    # user of that datablock.
     if matches:
+        if existing.users > 0:
+            return bpy.data.node_groups.new(name, tree_type), False
         _wipe_group(existing)
         return existing, False
     return bpy.data.node_groups.new(name, tree_type), False

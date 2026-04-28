@@ -13,19 +13,20 @@ your `.blend`, append across files, or hand-tune further.
 | **Infinite 4D Noise** | Flagship node group with Twist, domain warp, fine-detail layer, pulse, contrast/invert, and full output shaping. |
 | **Domain Warped Noise** | Focused warp-driven noise with a Warp Field vector output. |
 | **Animated Mask Noise** | Evolving procedural masks with Soft, Hard, and Edge outputs. |
+| **Liquid Marble Noise** | Dedicated warped-wave recipe for swirling marble and liquid-metal looks. |
 | **Custom 4D Noise** | Legacy 4D Noise + Voronoi morphing group. |
 | **Formula Builder** | Chain safe math/noise operations into custom node groups. |
-| **Preset Library** | 15+ built-in presets in 5 categories (Organic, Abstract, Surface, Motion, Displacement). |
+| **Preset Library** | 20+ built-in presets in 6 categories, including Geometry Nodes displacement and attribute-mask presets. |
 | **Save / Load Presets** | Export the active node's settings as JSON; reload any time. |
-| **Demo Material** | One-click material wired to any INL group on the active object. |
+| **Demo Material / Geometry Setup** | One-click shader material, generated-grid Geometry Nodes setup, or active-mesh displacement setup. |
 | **Animate Time** | Insert keyframes or a frame-based driver on the Time input. |
 | **Randomize / Mutate** | Full randomization with category lock toggles (Scale, Time, Warp, Output, Animation). |
-| **Validate & Cleanup** | Check a group for missing sockets; remove unused INL groups. |
+| **Validate & Cleanup** | Check recipe metadata, socket types, internal output links, and unused INL groups. |
 
 ## Install
 
-1. **Zip method** — zip the `procedural_noise_lab/` folder so the archive's
-   top entry is `procedural_noise_lab/__init__.py`.
+1. **Zip method** — run `python scripts/package_addon.py` from the repository
+   root. The generated archive's top entry is `procedural_noise_lab/__init__.py`.
    In Blender: *Edit ▸ Preferences ▸ Add-ons ▸ Install…* → select the zip →
    enable **Procedural Noise Lab**.
 
@@ -48,9 +49,9 @@ your `.blend`, append across files, or hand-tune further.
 
 | Panel | What it does |
 |-------|-------------|
-| **Create** | Build and insert node groups. Duplicate policy (Reuse / Rebuild / New Copy). |
-| **Demo Material** | Generate a complete material on the active object. |
-| **Presets** | Pick category → preset → Apply.  Save your own as JSON. |
+| **Create** | Build and insert node groups. Duplicate policy (Reuse / Rebuild Safe / New Copy). |
+| **Demo Material** | Generate a complete material or Geometry Nodes modifier on the active object. Geometry demos can use a generated grid or the active mesh. |
+| **Presets** | Pick category → preset → Apply. Presets filter to the selected INL recipe when possible. Save your own as JSON. |
 | **Animation** | Keyframe or driver on Time.  Set frame range or speed. |
 | **Randomize / Mutate** | Randomize or nudge inputs with lock toggles. |
 | **Utilities** | Validate active group; clean unused INL groups. |
@@ -82,6 +83,32 @@ Threshold, Softness, Contrast, Edge Width, Invert.
 
 **Outputs:** Soft Mask, Hard Mask, Edge Mask, Height.
 
+### INL_Liquid_Marble_Noise
+
+**Inputs:** Vector, Time, Scale, Warp Amount, Warp Scale, Wave Scale,
+Wave Distortion, Detail, Roughness.
+
+**Outputs:** Fac, Color.
+
+## Development
+
+- Recipe metadata lives in `recipe_registry.py`; use it when adding a new
+  built-in recipe so operators, menus, demo targets, validation, and tests stay
+  aligned.
+- Geometry Nodes demos keep the generated grid workflow by default. Use the
+  Active Mesh source when you want to displace the object's incoming geometry.
+  Both modes store the chosen scalar output as a point float attribute named
+  `inl_mask` by default.
+- `REBUILD` is intentionally safe: if an existing node group already has users,
+  the add-on creates a suffixed copy instead of mutating every material or
+  modifier that references the original datablock.
+- Generated local artifacts are ignored by Git: `.DS_Store`, `__pycache__/`,
+  Python bytecode, and `procedural_noise_lab.zip`.
+- Run `python -m compileall procedural_noise_lab scripts tests` for a local
+  syntax check.
+- Run `blender --background --python tests/smoke.py` for Blender-side recipe,
+  validation, and demo-material smoke tests.
+
 ## Project Layout
 
 ```
@@ -90,6 +117,7 @@ procedural_noise_lab/
   interface_utils.py       # Blender 4.x node-tree interface helpers
   metadata.py              # Recipe-ID / version stamping on node groups
   node_layout.py           # Stage frames and node positioning
+  recipe_registry.py       # Built-in recipe registry and metadata
   custom_4d_noise.py       # Legacy Custom 4D Noise builder
   formula_builder.py       # Operation-chain → node-group compiler
   recipe_infinite_4d.py    # Infinite 4D Noise recipe
@@ -104,13 +132,20 @@ procedural_noise_lab/
   properties.py            # PropertyGroups for UI state
   operators.py             # All operators
   ui.py                    # Shader Editor N-panel (7 collapsible panels)
+scripts/
+  package_addon.py         # Rebuild procedural_noise_lab.zip
+tests/
+  smoke.py                 # Blender background smoke tests
 ```
 
 ## Compatibility
 
 - **Blender 4.0 – 5.1+** (uses `node_tree.interface` API introduced in 4.0).
-- All node groups are standard `ShaderNodeTree` groups — fully portable
+- Shader node groups are the primary supported target and are fully portable
   across `.blend` files via Append / Link.
+- Geometry Nodes insertion is supported for all built-in noise recipes. The
+  one-click Geometry setup can create a generated grid or displace active mesh
+  geometry, and stores a reusable point attribute for material workflows.
 
 ## License
 
