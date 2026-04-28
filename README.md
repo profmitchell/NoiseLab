@@ -1,6 +1,3 @@
-<div align="center">
-  <img src="assets/banner.png" alt="Procedural Noise Lab Banner" width="800"/>
-</div>
 
 # Procedural Noise Lab (Infinite Noise Lab)
 
