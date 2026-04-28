@@ -29,9 +29,10 @@ class PNL_OperationItem(PropertyGroup):
         name="Operation",
         items=[(k, label, desc) for k, label, desc in OP_TYPES],
         default='NOISE',
+        description="Mathematical or noise operation to apply"
     )
-    param1: FloatProperty(name="Param 1", default=0.0)
-    param2: FloatProperty(name="Param 2", default=1.0)
+    param1: FloatProperty(name="Param 1", default=0.0, description="First parameter for the operation (often Scale or Input A)")
+    param2: FloatProperty(name="Param 2", default=1.0, description="Second parameter for the operation (often Detail or Input B)")
 
 
 # ---------------------------------------------------------------------------
@@ -59,16 +60,19 @@ class PNL_Settings(PropertyGroup):
             ('INL_Animated_Mask_Noise', "Animated Mask Noise", ""),
         ],
         default='INL_Infinite_4D_Noise',
+        description="Target node group to generate a demo material for",
     )
 
     # Preset system
     preset_category: EnumProperty(
         name="Category",
         items=_preset_category_items,
+        description="Category of noise presets",
     )
     preset_name: EnumProperty(
         name="Preset",
         items=_preset_name_items,
+        description="Specific noise preset to load",
     )
 
     # Animation
@@ -79,19 +83,20 @@ class PNL_Settings(PropertyGroup):
             ('DRIVER',    "Driver",    "Add a frame-based driver on Time"),
         ],
         default='KEYFRAMES',
+        description="Method of animation: Keyframes on the timeline or a continuous Driver",
     )
-    anim_start_frame: IntProperty(name="Start", default=1, min=0)
-    anim_end_frame: IntProperty(name="End", default=120, min=1)
-    anim_speed: FloatProperty(name="Speed", default=1.0, min=0.01, max=100.0)
+    anim_start_frame: IntProperty(name="Start", default=1, min=0, description="Frame at which animation begins")
+    anim_end_frame: IntProperty(name="End", default=120, min=1, description="Frame at which animation ends (keyframe mode only)")
+    anim_speed: FloatProperty(name="Speed", default=1.0, min=0.01, max=100.0, description="Multiplier for the animation speed over time")
 
     # Randomise / mutate
     mutate_amount: FloatProperty(name="Mutation %", default=0.2, min=0.01, max=1.0,
-                                 subtype='FACTOR')
-    lock_scale: BoolProperty(name="Lock Scale", default=False)
-    lock_time: BoolProperty(name="Lock Time", default=False)
-    lock_warp: BoolProperty(name="Lock Warp", default=False)
-    lock_output: BoolProperty(name="Lock Output", default=False)
-    lock_animation: BoolProperty(name="Lock Animation", default=False)
+                                 subtype='FACTOR', description="Percentage of mutation to apply when randomizing parameters")
+    lock_scale: BoolProperty(name="Lock Scale", default=False, description="Prevent scale values from being randomized")
+    lock_time: BoolProperty(name="Lock Time", default=False, description="Prevent time values from being randomized")
+    lock_warp: BoolProperty(name="Lock Warp", default=False, description="Prevent warp values from being randomized")
+    lock_output: BoolProperty(name="Lock Output", default=False, description="Prevent output values from being randomized")
+    lock_animation: BoolProperty(name="Lock Animation", default=False, description="Prevent animation values from being randomized")
 
     # Formula builder
     group_name: StringProperty(
@@ -99,12 +104,12 @@ class PNL_Settings(PropertyGroup):
         default="My Procedural Noise",
         description="Name of the node group that will be (re)built",
     )
-    operations: CollectionProperty(type=PNL_OperationItem)
-    active_index: IntProperty(default=0)
+    operations: CollectionProperty(type=PNL_OperationItem, description="List of operations defining the custom procedural noise")
+    active_index: IntProperty(default=0, description="Currently selected operation index")
 
     # Advanced sections visibility
-    show_formula: BoolProperty(name="Show Formula Builder", default=False)
-    show_advanced: BoolProperty(name="Show Advanced", default=False)
+    show_formula: BoolProperty(name="Show Formula Builder", default=False, description="Toggle visibility of the Custom Formula Builder")
+    show_advanced: BoolProperty(name="Show Advanced", default=False, description="Toggle visibility of advanced settings")
 
 
 _classes = (PNL_OperationItem, PNL_Settings)

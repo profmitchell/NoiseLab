@@ -1,4 +1,8 @@
-# Procedural Noise Lab  (Infinite Noise Lab)
+<div align="center">
+  <img src="assets/banner.png" alt="Procedural Noise Lab Banner" width="800"/>
+</div>
+
+# Procedural Noise Lab (Infinite Noise Lab)
 
 A Blender add-on (4.0 – 5.1+) that generates reusable procedural-noise
 **node groups** from pure native Blender shader nodes.  No `eval`, no custom

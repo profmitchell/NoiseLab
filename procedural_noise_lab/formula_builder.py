@@ -51,14 +51,15 @@ def _vmath(tree, op, loc):
     return n
 
 
-def build_formula_group(group_name, operations):
+def build_formula_group(group_name, operations, tree_type='ShaderNodeTree'):
     """Build a shader node group named ``group_name`` from a list of dicts:
 
     Each entry:  {"op": <OP id>, "param1": float, "param2": float}
 
     param1/param2 meanings depend on the op (see code).
     """
-    tree, _ = get_or_create_group(group_name, "ShaderNodeTree", policy='REBUILD')
+    actual_name = group_name if tree_type == 'ShaderNodeTree' else group_name + " Geo"
+    tree, _ = get_or_create_group(actual_name, tree_type, policy='REBUILD')
 
     # Base interface
     new_input(tree, "Vector", "NodeSocketVector", default=(0.0, 0.0, 0.0))

@@ -56,8 +56,9 @@ def _link(tree, a, b):
     tree.links.new(a, b)
 
 
-def build(policy='REBUILD'):
-    tree, reused = get_or_create_group(INTERNAL_NAME, "ShaderNodeTree", policy=policy)
+def build(policy='REBUILD', tree_type='ShaderNodeTree'):
+    group_name = INTERNAL_NAME if tree_type == 'ShaderNodeTree' else INTERNAL_NAME + "_Geo"
+    tree, reused = get_or_create_group(group_name, tree_type, policy=policy)
     if reused:
         return tree, True
 

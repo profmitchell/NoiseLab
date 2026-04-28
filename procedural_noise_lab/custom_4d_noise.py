@@ -47,8 +47,9 @@ def _link(tree, a, b):
     tree.links.new(a, b)
 
 
-def build_custom_4d_noise():
-    tree, _ = get_or_create_group(GROUP_NAME, "ShaderNodeTree", policy='REBUILD')
+def build_custom_4d_noise(tree_type='ShaderNodeTree'):
+    group_name = GROUP_NAME if tree_type == 'ShaderNodeTree' else GROUP_NAME + " Geo"
+    tree, _ = get_or_create_group(group_name, tree_type, policy='REBUILD')
 
     # ---- Interface (inputs) ----
     new_input(tree, "Vector",      "NodeSocketVector", default=(0.0, 0.0, 0.0))

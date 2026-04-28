@@ -29,7 +29,8 @@ def _insert_group_into_active_editor(context, group):
     tree = space.edit_tree
     if tree is None or tree.bl_idname != group.bl_idname:
         return None
-    node = tree.nodes.new("ShaderNodeGroup")
+    node_type = "ShaderNodeGroup" if tree.bl_idname == 'ShaderNodeTree' else "GeometryNodeGroup"
+    node = tree.nodes.new(node_type)
     node.node_tree = group
     node.location = (0.0, 0.0)
     for n in tree.nodes:
@@ -37,6 +38,12 @@ def _insert_group_into_active_editor(context, group):
     node.select = True
     tree.nodes.active = node
     return node
+
+def _get_tree_type(context):
+    space = context.space_data
+    if space and space.type == 'NODE_EDITOR' and space.tree_type == 'GeometryNodeTree':
+        return 'GeometryNodeTree'
+    return 'ShaderNodeTree'
 
 
 def _active_group_node(context):
@@ -67,7 +74,7 @@ class PNL_OT_build_infinite_4d(Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        group, reused = recipe_infinite_4d.build(policy=_policy(context))
+        group, reused = recipe_infinite_4d.build(policy=_policy(context), tree_type=_get_tree_type(context))
         node = _insert_group_into_active_editor(context, group)
         tag = "reused" if reused else "built"
         self.report({'INFO'}, f"{recipe_infinite_4d.DISPLAY_NAME} {tag}.")
@@ -81,7 +88,7 @@ class PNL_OT_build_domain_warp(Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        group, reused = recipe_domain_warp.build(policy=_policy(context))
+        group, reused = recipe_domain_warp.build(policy=_policy(context), tree_type=_get_tree_type(context))
         _insert_group_into_active_editor(context, group)
         tag = "reused" if reused else "built"
         self.report({'INFO'}, f"{recipe_domain_warp.DISPLAY_NAME} {tag}.")
@@ -95,7 +102,7 @@ class PNL_OT_build_animated_mask(Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        group, reused = recipe_animated_mask.build(policy=_policy(context))
+        group, reused = recipe_animated_mask.build(policy=_policy(context), tree_type=_get_tree_type(context))
         _insert_group_into_active_editor(context, group)
         tag = "reused" if reused else "built"
         self.report({'INFO'}, f"{recipe_animated_mask.DISPLAY_NAME} {tag}.")
@@ -109,7 +116,7 @@ class PNL_OT_build_custom_4d(Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        group = build_custom_4d_noise()
+        group = build_custom_4d_noise(tree_type=_get_tree_type(context))
         _insert_group_into_active_editor(context, group)
         self.report({'INFO'}, f"Built node group '{CUSTOM_4D_NAME}'.")
         return {'FINISHED'}
@@ -422,7 +429,7 @@ class PNL_OT_build_formula(Operator):
         ops = [{"op": it.op, "param1": it.param1, "param2": it.param2}
                for it in s.operations]
         name = s.group_name.strip() or "My Procedural Noise"
-        group = build_formula_group(name, ops)
+        group = build_formula_group(name, ops, tree_type=_get_tree_type(context))
         _insert_group_into_active_editor(context, group)
         self.report({'INFO'}, f"Built '{name}' from {len(ops)} operation(s).")
         return {'FINISHED'}
