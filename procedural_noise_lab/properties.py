@@ -58,6 +58,7 @@ class PNL_Settings(PropertyGroup):
             ('INL_Infinite_4D_Noise',   "Infinite 4D Noise",   ""),
             ('INL_Domain_Warped_Noise', "Domain Warped Noise", ""),
             ('INL_Animated_Mask_Noise', "Animated Mask Noise", ""),
+            ('INL_Liquid_Marble_Noise', "Liquid Marble Noise", ""),
         ],
         default='INL_Infinite_4D_Noise',
         description="Target node group to generate a demo material for",

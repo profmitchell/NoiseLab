@@ -50,6 +50,7 @@ class PNL_PT_create(_PNL_PanelBase, Panel):
         layout.operator("pnl.build_infinite_4d", icon='FORCE_TURBULENCE')
         layout.operator("pnl.build_domain_warp", icon='MOD_WARP')
         layout.operator("pnl.build_animated_mask", icon='MOD_MASK')
+        layout.operator("pnl.build_liquid_marble", icon='MOD_OCEAN')
         layout.separator()
         layout.operator("pnl.build_custom_4d", icon='TEXTURE')
         layout.separator()
@@ -57,18 +58,24 @@ class PNL_PT_create(_PNL_PanelBase, Panel):
 
 
 # =========================================================================
-# 2  Demo Material
+# 2  Demo Setup
 # =========================================================================
 class PNL_PT_demo(_PNL_PanelBase, Panel):
-    bl_label = "Demo Material"
+    bl_label = "Demo Setup"
     bl_idname = "PNL_PT_demo"
     bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
         layout = self.layout
         s = context.scene.pnl_settings
+        is_geo = context.space_data.tree_type == 'GeometryNodeTree'
+        
         layout.prop(s, "demo_target", text="")
-        layout.operator("pnl.demo_material", icon='MATERIAL')
+        
+        op_text = "Create Demo Setup" if is_geo else "Create Demo Material"
+        op_icon = 'MODIFIER' if is_geo else 'MATERIAL'
+        
+        layout.operator("pnl.demo_material", text=op_text, icon=op_icon)
 
 
 # =========================================================================
@@ -171,7 +178,9 @@ class PNL_PT_utilities(_PNL_PanelBase, Panel):
         layout = self.layout
         layout.operator("pnl.validate", icon='CHECKMARK')
         layout.operator("pnl.cleanup", icon='TRASH')
-        layout.operator("pnl.duplicate_group", icon='DUPLICATE')
+        row = layout.row(align=True)
+        row.operator("pnl.duplicate_group", icon='DUPLICATE', text="Duplicate")
+        row.operator("pnl.rename_group", icon='GREASEPENCIL', text="Rename")
         layout.separator()
         layout.operator("pnl.open_docs", icon='URL')
 

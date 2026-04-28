@@ -9,7 +9,8 @@ from .formula_builder import build_formula_group
 from . import recipe_infinite_4d
 from . import recipe_domain_warp
 from . import recipe_animated_mask
-from .demo_material import create_demo_material
+from . import recipe_liquid_marble
+from .demo_material import create_demo_material, create_demo_geometry_setup
 from .presets_data import PRESETS, flat_presets
 from .presets_io import save_preset as _save_preset_json, load_user_presets
 from .animation import (
@@ -32,7 +33,13 @@ def _insert_group_into_active_editor(context, group):
     node_type = "ShaderNodeGroup" if tree.bl_idname == 'ShaderNodeTree' else "GeometryNodeGroup"
     node = tree.nodes.new(node_type)
     node.node_tree = group
-    node.location = (0.0, 0.0)
+    
+    # Place at cursor if possible, else center
+    if hasattr(space, "cursor_location"):
+        node.location = space.cursor_location
+    else:
+        node.location = (0.0, 0.0)
+        
     for n in tree.nodes:
         n.select = False
     node.select = True
@@ -109,6 +116,20 @@ class PNL_OT_build_animated_mask(Operator):
         return {'FINISHED'}
 
 
+class PNL_OT_build_liquid_marble(Operator):
+    bl_idname = "pnl.build_liquid_marble"
+    bl_label = "Add Liquid Marble Noise"
+    bl_description = "Create INL_Liquid_Marble_Noise and insert it"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        group, reused = recipe_liquid_marble.build(policy=_policy(context), tree_type=_get_tree_type(context))
+        _insert_group_into_active_editor(context, group)
+        tag = "reused" if reused else "built"
+        self.report({'INFO'}, f"{recipe_liquid_marble.DISPLAY_NAME} {tag}.")
+        return {'FINISHED'}
+
+
 class PNL_OT_build_custom_4d(Operator):
     bl_idname = "pnl.build_custom_4d"
     bl_label = "Add Custom 4D Noise"
@@ -133,17 +154,29 @@ class PNL_OT_demo_material(Operator):
 
     def execute(self, context):
         target = context.scene.pnl_settings.demo_target
+        tree_type = _get_tree_type(context)
+        
+        # Suffix for Geo if needed
+        actual_target = target if tree_type == 'ShaderNodeTree' else target + "_Geo"
+        
         # Ensure the group exists first
         if target == "INL_Infinite_4D_Noise":
-            recipe_infinite_4d.build(policy='REUSE')
+            recipe_infinite_4d.build(policy='REUSE', tree_type=tree_type)
         elif target == "INL_Domain_Warped_Noise":
-            recipe_domain_warp.build(policy='REUSE')
+            recipe_domain_warp.build(policy='REUSE', tree_type=tree_type)
         elif target == "INL_Animated_Mask_Noise":
-            recipe_animated_mask.build(policy='REUSE')
-        mat, msg = create_demo_material(target)
-        level = 'INFO' if mat else 'ERROR'
+            recipe_animated_mask.build(policy='REUSE', tree_type=tree_type)
+        elif target == "INL_Liquid_Marble_Noise":
+            recipe_liquid_marble.build(policy='REUSE', tree_type=tree_type)
+            
+        if tree_type == 'ShaderNodeTree':
+            res, msg = create_demo_material(actual_target)
+        else:
+            res, msg = create_demo_geometry_setup(actual_target)
+            
+        level = 'INFO' if res else 'ERROR'
         self.report({level}, msg)
-        return {'FINISHED'} if mat else {'CANCELLED'}
+        return {'FINISHED'} if res else {'CANCELLED'}
 
 
 # =========================================================================
@@ -334,6 +367,35 @@ class PNL_OT_duplicate_group(Operator):
         return {'FINISHED'}
 
 
+class PNL_OT_rename_group(Operator):
+    bl_idname = "pnl.rename_group"
+    bl_label = "Rename Selected INL Group"
+    bl_description = "Rename the active INL node group"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    new_name: StringProperty(name="New Name", default="")
+
+    def invoke(self, context, event):
+        node = _active_group_node(context)
+        if node and node.node_tree:
+            self.new_name = node.node_tree.name
+        return context.window_manager.invoke_props_dialog(self)
+
+    def execute(self, context):
+        node = _active_group_node(context)
+        if node is None or node.node_tree is None:
+            self.report({'WARNING'}, "Select an INL group node first.")
+            return {'CANCELLED'}
+        if not self.new_name.strip():
+            self.report({'WARNING'}, "Invalid name.")
+            return {'CANCELLED'}
+        
+        old_name = node.node_tree.name
+        node.node_tree.name = self.new_name.strip()
+        self.report({'INFO'}, f"Renamed '{old_name}' to '{node.node_tree.name}'.")
+        return {'FINISHED'}
+
+
 class PNL_OT_open_docs(Operator):
     bl_idname = "pnl.open_docs"
     bl_label = "Open Documentation"
@@ -350,6 +412,20 @@ class PNL_OT_open_docs(Operator):
         else:
             self.report({'WARNING'}, "README.md not found.")
         return {'FINISHED'}
+
+
+# =========================================================================
+# Menu integration (Shift+A)
+# =========================================================================
+def menu_draw_textures(self, context):
+    layout = self.layout
+    layout.separator()
+    layout.label(text="Noise Lab", icon='FORCE_TURBULENCE')
+    layout.operator("pnl.build_infinite_4d", text="Infinite 4D Noise", icon='FORCE_TURBULENCE')
+    layout.operator("pnl.build_domain_warp", text="Domain Warped Noise", icon='MOD_WARP')
+    layout.operator("pnl.build_animated_mask", text="Animated Mask Noise", icon='MOD_MASK')
+    layout.operator("pnl.build_liquid_marble", text="Liquid Marble Noise", icon='MOD_OCEAN')
+    layout.operator("pnl.build_custom_4d", text="Custom 4D Noise", icon='TEXTURE')
 
 
 # =========================================================================
@@ -442,6 +518,7 @@ _classes = (
     PNL_OT_build_infinite_4d,
     PNL_OT_build_domain_warp,
     PNL_OT_build_animated_mask,
+    PNL_OT_build_liquid_marble,
     PNL_OT_build_custom_4d,
     PNL_OT_demo_material,
     PNL_OT_apply_preset,
@@ -452,6 +529,7 @@ _classes = (
     PNL_OT_validate,
     PNL_OT_cleanup,
     PNL_OT_duplicate_group,
+    PNL_OT_rename_group,
     PNL_OT_open_docs,
     PNL_OT_op_add,
     PNL_OT_op_remove,
@@ -464,8 +542,27 @@ _classes = (
 def register():
     for c in _classes:
         bpy.utils.register_class(c)
+    
+    # Safely append to texture menus across different Blender versions
+    menu_names = [
+        "NODE_MT_category_texture",          # Pre-4.2
+        "NODE_MT_shader_node_add_texture",    # 4.2+ Shader
+        "NODE_MT_geometry_node_add_texture",  # 4.2+ Geo Nodes
+    ]
+    for mname in menu_names:
+        if hasattr(bpy.types, mname):
+            getattr(bpy.types, mname).append(menu_draw_textures)
 
 
 def unregister():
+    menu_names = [
+        "NODE_MT_category_texture",
+        "NODE_MT_shader_node_add_texture",
+        "NODE_MT_geometry_node_add_texture",
+    ]
+    for mname in menu_names:
+        if hasattr(bpy.types, mname):
+            getattr(bpy.types, mname).remove(menu_draw_textures)
+            
     for c in reversed(_classes):
         bpy.utils.unregister_class(c)

@@ -42,7 +42,7 @@ PRESETS = {
     ],
     "ABSTRACT": [
         {
-            "name": "Liquid Marble",
+            "name": "Classic Liquid Marble",
             "target": "INL_Infinite_4D_Noise",
             "values": {"Scale": 7.5, "Detail": 14.0, "Roughness": 0.58,
                        "Lacunarity": 2.1, "Distortion": 8.0,
@@ -50,6 +50,12 @@ PRESETS = {
                        "Contrast": 1.8, "Threshold": 0.45},
             "desc": "Fluid, warped texture for marble/liquid metal.",
             "anim": "Animate Time 0→2 over 240 frames.",
+        },
+        {
+            "name": "Swirling Marble",
+            "target": "INL_Liquid_Marble_Noise",
+            "values": {"Warp Amount": 3.0, "Wave Scale": 8.0, "Wave Distortion": 5.0},
+            "desc": "Dedicated liquid marble recipe with swirling wave patterns.",
         },
         {
             "name": "Energy Field",

@@ -67,3 +67,69 @@ def create_demo_material(group_name="INL_Infinite_4D_Noise"):
         obj.active_material = mat
 
     return mat, f"Created '{mat_name}' on '{obj.name}'."
+
+
+def create_demo_geometry_setup(group_name="INL_Infinite_4D_Noise_Geo"):
+    """Build a Geometry Nodes modifier setup on the active object.
+
+    Wires: Grid → Set Position (Displacement) → Group Output.
+    """
+    obj = bpy.context.active_object
+    if obj is None:
+        return None, "Select an object first."
+
+    group = bpy.data.node_groups.get(group_name)
+    if group is None:
+        return None, f"Node group '{group_name}' not found. Build it first."
+
+    mod_name = "INL_Demo_Setup"
+    mod = obj.modifiers.get(mod_name)
+    if mod is None:
+        mod = obj.modifiers.new(mod_name, 'NODES')
+    
+    tree = mod.node_group
+    if tree is None:
+        tree = bpy.data.node_groups.new(mod_name + "_Tree", 'GeometryNodeTree')
+        mod.node_group = tree
+
+    # Clear existing nodes
+    for n in list(tree.nodes):
+        tree.nodes.remove(n)
+
+    # Nodes
+    grid = tree.nodes.new("GeometryNodeMeshGrid")
+    grid.location = (-400, 0)
+    grid.inputs["Size X"].default_value = 2.0
+    grid.inputs["Size Y"].default_value = 2.0
+    grid.inputs["Vertices X"].default_value = 100
+    grid.inputs["Vertices Y"].default_value = 100
+
+    set_pos = tree.nodes.new("GeometryNodeSetPosition")
+    set_pos.location = (-100, 0)
+
+    grp = tree.nodes.new("GeometryNodeGroup")
+    grp.node_tree = group
+    grp.location = (-400, -200)
+
+    comb = tree.nodes.new("ShaderNodeCombineXYZ")  # CombineXYZ is used in Geo Nodes too
+    comb.location = (-250, -200)
+
+    out = tree.nodes.new("NodeGroupOutput")
+    out.location = (200, 0)
+    tree.interface.new_socket(name="Geometry", in_out='OUTPUT', socket_type='NodeSocketGeometry')
+
+    # Links
+    tree.links.new(grid.outputs["Mesh"], set_pos.inputs["Geometry"])
+    
+    # Use position as vector if it exists
+    pos_input = tree.nodes.new("GeometryNodeInputPosition")
+    pos_input.location = (-600, -200)
+    tree.links.new(pos_input.outputs["Position"], grp.inputs["Vector"])
+
+    if "Height" in grp.outputs:
+        tree.links.new(grp.outputs["Height"], comb.inputs["Z"])
+        tree.links.new(comb.outputs["Vector"], set_pos.inputs["Offset"])
+
+    tree.links.new(set_pos.outputs["Geometry"], out.inputs["Geometry"])
+
+    return mod, f"Created '{mod_name}' on '{obj.name}'."
