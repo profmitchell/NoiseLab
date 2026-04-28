@@ -7,6 +7,13 @@ from bpy.types import Operator
 from .custom_4d_noise import build_custom_4d_noise, GROUP_NAME as CUSTOM_4D_NAME
 from .formula_builder import build_formula_group
 from .demo_material import create_demo_material, create_demo_geometry_setup
+from .preset_library import (
+    delete_user_preset_by_id,
+    filter_presets,
+    find_preset,
+    is_favorite,
+    toggle_favorite,
+)
 from .presets_data import PRESETS
 from .presets_io import save_preset as _save_preset_json
 from .recipe_registry import RECIPES, RECIPES_BY_KEY, recipe_for_group, recipe_for_target_name
@@ -66,6 +73,67 @@ def _active_group_node(context):
 
 def _policy(context):
     return context.scene.pnl_settings.duplicate_policy
+
+
+def _selected_browser_item(context):
+    s = context.scene.pnl_settings
+    if not (0 <= s.preset_browser_index < len(s.preset_browser_items)):
+        return None
+    return s.preset_browser_items[s.preset_browser_index]
+
+
+def _selected_browser_preset(context):
+    item = _selected_browser_item(context)
+    if item is None:
+        return None
+    return find_preset(item.preset_id)
+
+
+def _refresh_preset_browser(context):
+    s = context.scene.pnl_settings
+    selected_id = ""
+    item = _selected_browser_item(context)
+    if item:
+        selected_id = item.preset_id
+    s.preset_browser_items.clear()
+    for preset in filter_presets(s):
+        row = s.preset_browser_items.add()
+        row.preset_id = preset["id"]
+        row.name = preset["name"]
+        row.category = preset["category"]
+        row.target = preset["target"]
+        row.source = preset["source"]
+        row.tags = ", ".join(preset["tags"])
+        row.description = preset["desc"]
+        row.animation_hint = preset["anim"]
+        row.favorite = is_favorite(preset["id"])
+        if preset["id"] == selected_id:
+            s.preset_browser_index = len(s.preset_browser_items) - 1
+    if s.preset_browser_items:
+        s.preset_browser_index = max(0, min(s.preset_browser_index, len(s.preset_browser_items) - 1))
+    else:
+        s.preset_browser_index = 0
+
+
+def _apply_preset_to_node(operator, node, preset):
+    recipe = recipe_for_group(node.node_tree)
+    if recipe and preset.get("target") != recipe.internal_name:
+        operator.report(
+            {'WARNING'},
+            f"Preset targets {preset.get('target')}; selected node is {recipe.internal_name}.",
+        )
+        return {'CANCELLED'}
+
+    applied = 0
+    for key, val in preset["values"].items():
+        if key in node.inputs:
+            try:
+                node.inputs[key].default_value = val
+                applied += 1
+            except Exception:
+                pass
+    operator.report({'INFO'}, f"Applied '{preset['name']}' ({applied} values).")
+    return {'FINISHED'}
 
 
 def _build_registered_recipe(context, operator, recipe_key):
@@ -179,6 +247,19 @@ class PNL_OT_demo_material(Operator):
 # =========================================================================
 # Presets – apply / save
 # =========================================================================
+class PNL_OT_refresh_presets(Operator):
+    bl_idname = "pnl.refresh_presets"
+    bl_label = "Refresh Presets"
+    bl_description = "Reload and filter built-in, pack, and user presets"
+    bl_options = {'REGISTER'}
+
+    def execute(self, context):
+        _refresh_preset_browser(context)
+        count = len(context.scene.pnl_settings.preset_browser_items)
+        self.report({'INFO'}, f"Loaded {count} preset(s).")
+        return {'FINISHED'}
+
+
 class PNL_OT_apply_preset(Operator):
     bl_idname = "pnl.apply_preset"
     bl_label = "Apply Preset"
@@ -186,13 +267,14 @@ class PNL_OT_apply_preset(Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        s = context.scene.pnl_settings
-        cat_presets = PRESETS.get(s.preset_category, [])
-        preset = None
-        for p in cat_presets:
-            if p["name"] == s.preset_name:
-                preset = p
-                break
+        preset = _selected_browser_preset(context)
+        if preset is None:
+            s = context.scene.pnl_settings
+            cat_presets = PRESETS.get(s.preset_category, [])
+            for p in cat_presets:
+                if p["name"] == s.preset_name:
+                    preset = p
+                    break
         if preset is None:
             self.report({'WARNING'}, "No preset selected.")
             return {'CANCELLED'}
@@ -201,23 +283,66 @@ class PNL_OT_apply_preset(Operator):
         if node is None:
             self.report({'WARNING'}, "Select an INL group node first.")
             return {'CANCELLED'}
-        recipe = recipe_for_group(node.node_tree)
-        if recipe and preset.get("target") != recipe.internal_name:
-            self.report(
-                {'WARNING'},
-                f"Preset targets {preset.get('target')}; selected node is {recipe.internal_name}.",
-            )
-            return {'CANCELLED'}
+        return _apply_preset_to_node(self, node, preset)
 
-        applied = 0
-        for key, val in preset["values"].items():
-            if key in node.inputs:
-                try:
-                    node.inputs[key].default_value = val
-                    applied += 1
-                except Exception:
-                    pass
-        self.report({'INFO'}, f"Applied '{preset['name']}' ({applied} values).")
+
+class PNL_OT_create_apply_preset(Operator):
+    bl_idname = "pnl.create_apply_preset"
+    bl_label = "Create + Apply"
+    bl_description = "Build the preset's target group, insert it, and apply the selected preset"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        preset = _selected_browser_preset(context)
+        if preset is None:
+            self.report({'WARNING'}, "No preset selected.")
+            return {'CANCELLED'}
+        recipe = recipe_for_target_name(preset.get("target", ""))
+        if recipe is None:
+            self.report({'ERROR'}, f"Unknown preset target '{preset.get('target')}'.")
+            return {'CANCELLED'}
+        tree_type = _get_tree_type(context)
+        group, _reused = recipe.build(policy=_policy(context), tree_type=tree_type)
+        node = _insert_group_into_active_editor(context, group)
+        if node is None:
+            self.report({'WARNING'}, f"Built '{group.name}', but no compatible node tree is open.")
+            return {'CANCELLED'}
+        return _apply_preset_to_node(self, node, preset)
+
+
+class PNL_OT_toggle_preset_favorite(Operator):
+    bl_idname = "pnl.toggle_preset_favorite"
+    bl_label = "Favorite"
+    bl_description = "Toggle favorite state for the selected preset"
+    bl_options = {'REGISTER'}
+
+    def execute(self, context):
+        item = _selected_browser_item(context)
+        if item is None:
+            self.report({'WARNING'}, "No preset selected.")
+            return {'CANCELLED'}
+        enabled = toggle_favorite(item.preset_id)
+        _refresh_preset_browser(context)
+        self.report({'INFO'}, "Favorite added." if enabled else "Favorite removed.")
+        return {'FINISHED'}
+
+
+class PNL_OT_delete_user_preset(Operator):
+    bl_idname = "pnl.delete_user_preset"
+    bl_label = "Delete User Preset"
+    bl_description = "Delete the selected user preset JSON"
+    bl_options = {'REGISTER'}
+
+    def execute(self, context):
+        item = _selected_browser_item(context)
+        if item is None:
+            self.report({'WARNING'}, "No preset selected.")
+            return {'CANCELLED'}
+        if not delete_user_preset_by_id(item.preset_id):
+            self.report({'WARNING'}, "Only user presets can be deleted.")
+            return {'CANCELLED'}
+        _refresh_preset_browser(context)
+        self.report({'INFO'}, "Deleted user preset.")
         return {'FINISHED'}
 
 
@@ -242,7 +367,11 @@ class PNL_OT_save_preset(Operator):
             if inp.type == 'VALUE':
                 values[inp.name] = inp.default_value
         target = node.node_tree.name if node.node_tree else ""
+        recipe = recipe_for_group(node.node_tree)
+        if recipe:
+            target = recipe.internal_name
         path = _save_preset_json(self.preset_name, target, values)
+        _refresh_preset_browser(context)
         self.report({'INFO'}, f"Saved preset '{self.preset_name}'.")
         return {'FINISHED'}
 
@@ -534,7 +663,11 @@ _classes = (
     PNL_OT_build_liquid_marble,
     PNL_OT_build_custom_4d,
     PNL_OT_demo_material,
+    PNL_OT_refresh_presets,
     PNL_OT_apply_preset,
+    PNL_OT_create_apply_preset,
+    PNL_OT_toggle_preset_favorite,
+    PNL_OT_delete_user_preset,
     PNL_OT_save_preset,
     PNL_OT_animate_time,
     PNL_OT_clear_time,

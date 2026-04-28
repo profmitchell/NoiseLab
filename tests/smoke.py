@@ -30,6 +30,22 @@ def main():
         if not registry.RECIPES:
             fail("No recipes registered.")
 
+        preset_library = importlib.import_module("procedural_noise_lab.preset_library")
+        presets = preset_library.all_presets()
+        if len(presets) < 20:
+            fail(f"Expected larger preset library, found {len(presets)} presets.")
+        if not any(preset["source"] == "PACK" for preset in presets):
+            fail("Expected at least one JSON preset pack preset.")
+
+        settings = bpy.context.scene.pnl_settings
+        settings.preset_search = "grid"
+        settings.preset_browser_category = "GEOMETRY"
+        settings.preset_browser_recipe = "ALL"
+        settings.preset_source = "ALL"
+        settings.preset_favorites_only = False
+        if not preset_library.filter_presets(settings, presets):
+            fail("Preset browser filters returned no Geometry grid presets.")
+
         for recipe in registry.RECIPES:
             for tree_type in ("ShaderNodeTree", "GeometryNodeTree"):
                 group, reused = recipe.build(policy="SUFFIX", tree_type=tree_type)

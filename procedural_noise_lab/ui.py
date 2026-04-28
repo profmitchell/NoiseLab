@@ -36,6 +36,21 @@ class PNL_UL_operations(UIList):
         row.prop(item, "param2", text="P2")
 
 
+class PNL_UL_preset_browser(UIList):
+    bl_idname = "PNL_UL_preset_browser"
+
+    def draw_item(self, context, layout, data, item, icon,
+                  active_data, active_propname, index):
+        row = layout.row(align=True)
+        fav_icon = 'SOLO_ON' if item.favorite else 'SOLO_OFF'
+        row.label(text="", icon=fav_icon)
+        col = row.column(align=True)
+        col.label(text=item.name)
+        sub = col.row(align=True)
+        sub.scale_y = 0.65
+        sub.label(text=f"{item.category} · {item.source}")
+
+
 # =========================================================================
 # 1  Create
 # =========================================================================
@@ -102,39 +117,52 @@ class PNL_PT_presets(_PNL_PanelBase, Panel):
     def draw(self, context):
         layout = self.layout
         s = context.scene.pnl_settings
-        from .recipe_registry import recipe_for_group
 
-        layout.prop(s, "preset_category", text="")
-        layout.prop(s, "preset_name", text="")
+        row = layout.row(align=True)
+        row.prop(s, "preset_search", text="", icon='VIEWZOOM')
+        row.operator("pnl.refresh_presets", text="", icon='FILE_REFRESH')
 
-        recipe = None
-        active = context.space_data.edit_tree.nodes.active if context.space_data.edit_tree else None
-        if active and active.type == 'GROUP':
-            recipe = recipe_for_group(active.node_tree)
-        if recipe:
-            row = layout.row()
-            row.scale_y = 0.75
-            row.label(text=f"Filtered for {recipe.display_name}", icon='FILTER')
+        row = layout.row(align=True)
+        row.prop(s, "preset_browser_category", text="")
+        row.prop(s, "preset_browser_recipe", text="")
+        row = layout.row(align=True)
+        row.prop(s, "preset_source", text="")
+        row.prop(s, "preset_favorites_only", toggle=True, icon='SOLO_ON')
+        layout.prop(s, "preset_tag_filter", text="Tag")
 
-        # Show preset description if available
-        from .presets_data import PRESETS
-        cat_presets = PRESETS.get(s.preset_category, [])
-        desc = ""
-        anim = ""
-        for p in cat_presets:
-            if p["name"] == s.preset_name:
-                desc = p.get("desc", "")
-                anim = p.get("anim", "")
-                break
-        if desc:
+        if not s.preset_browser_items:
+            layout.operator("pnl.refresh_presets", text="Load Presets", icon='FILE_REFRESH')
+            return
+
+        row = layout.row()
+        row.template_list(
+            "PNL_UL_preset_browser", "",
+            s, "preset_browser_items",
+            s, "preset_browser_index",
+            rows=7,
+        )
+        col = row.column(align=True)
+        col.operator("pnl.toggle_preset_favorite", icon='SOLO_ON', text="")
+        col.operator("pnl.delete_user_preset", icon='TRASH', text="")
+
+        item = None
+        if 0 <= s.preset_browser_index < len(s.preset_browser_items):
+            item = s.preset_browser_items[s.preset_browser_index]
+        if item:
             box = layout.box()
-            box.scale_y = 0.7
-            box.label(text=desc, icon='INFO')
-            if anim:
-                box.label(text=anim, icon='TIME')
+            box.scale_y = 0.75
+            box.label(text=item.name, icon='PRESET')
+            box.label(text=item.target)
+            if item.description:
+                box.label(text=item.description, icon='INFO')
+            if item.animation_hint:
+                box.label(text=item.animation_hint, icon='TIME')
+            if item.tags:
+                box.label(text=item.tags, icon='BOOKMARKS')
 
         row = layout.row(align=True)
         row.operator("pnl.apply_preset", icon='CHECKMARK')
+        row.operator("pnl.create_apply_preset", icon='ADD')
         row.operator("pnl.save_preset", icon='FILE_TICK')
 
 
@@ -251,6 +279,7 @@ class PNL_PT_formula(_PNL_PanelBase, Panel):
 # Registration
 # =========================================================================
 _classes = (
+    PNL_UL_preset_browser,
     PNL_UL_operations,
     PNL_PT_create,
     PNL_PT_demo,

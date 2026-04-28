@@ -1,0 +1,78 @@
+{
+  "name": "Geometry Surfaces",
+  "presets": [
+    {
+      "id": "geometry-surfaces-eroded-plateau",
+      "name": "Eroded Plateau",
+      "category": "GEOMETRY",
+      "target": "INL_Infinite_4D_Noise",
+      "tags": ["geometry", "terrain", "grid", "displacement"],
+      "description": "Layered terrain plateaus for generated grids.",
+      "animation_hint": "Use Grid source with Strength around 0.18.",
+      "values": {
+        "Scale": 3.8,
+        "Detail": 13.0,
+        "Roughness": 0.68,
+        "Warp Amount": 2.4,
+        "Warp Scale": 1.8,
+        "Fine Detail Amount": 0.35,
+        "Contrast": 1.65,
+        "Threshold": 0.44
+      }
+    },
+    {
+      "id": "geometry-surfaces-cloth-pucker",
+      "name": "Cloth Pucker",
+      "category": "GEOMETRY",
+      "target": "INL_Domain_Warped_Noise",
+      "tags": ["geometry", "fabric", "surface", "active mesh"],
+      "description": "Soft irregular pucker for dense active mesh surfaces.",
+      "values": {
+        "Base Scale": 18.0,
+        "Base Detail": 7.0,
+        "Roughness": 0.42,
+        "Warp Scale": 5.0,
+        "Warp Detail": 4.0,
+        "Warp Amount": 0.75,
+        "Contrast": 0.9,
+        "Threshold": 0.5
+      }
+    },
+    {
+      "id": "geometry-surfaces-animated-growth-mask",
+      "name": "Animated Growth Mask",
+      "category": "GEOMETRY",
+      "target": "INL_Animated_Mask_Noise",
+      "tags": ["geometry", "attribute", "mask", "animation"],
+      "description": "Soft evolving point attribute for material reveals.",
+      "animation_hint": "Animate Time on the Geometry Nodes modifier.",
+      "values": {
+        "Scale": 5.5,
+        "Speed": 0.6,
+        "Morph": 0.0,
+        "Detail": 10.0,
+        "Threshold": 0.48,
+        "Softness": 0.22,
+        "Contrast": 1.25,
+        "Edge Width": 0.08
+      }
+    },
+    {
+      "id": "geometry-surfaces-polished-stone-veins",
+      "name": "Polished Stone Veins",
+      "category": "SURFACE",
+      "target": "INL_Liquid_Marble_Noise",
+      "tags": ["surface", "marble", "veins", "relief"],
+      "description": "Long swirled veins for material masks or light relief.",
+      "values": {
+        "Scale": 4.5,
+        "Warp Amount": 4.2,
+        "Warp Scale": 1.9,
+        "Wave Scale": 12.0,
+        "Wave Distortion": 9.0,
+        "Detail": 6.0,
+        "Roughness": 0.65
+      }
+    }
+  ]
+}

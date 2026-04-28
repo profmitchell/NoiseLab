@@ -16,7 +16,7 @@ your `.blend`, append across files, or hand-tune further.
 | **Liquid Marble Noise** | Dedicated warped-wave recipe for swirling marble and liquid-metal looks. |
 | **Custom 4D Noise** | Legacy 4D Noise + Voronoi morphing group. |
 | **Formula Builder** | Chain safe math/noise operations into custom node groups. |
-| **Preset Library** | 20+ built-in presets in 6 categories, including Geometry Nodes displacement and attribute-mask presets. |
+| **Preset Browser** | 20+ built-in and pack-based presets with search, filters, favorites, user presets, and Geometry Nodes looks. |
 | **Save / Load Presets** | Export the active node's settings as JSON; reload any time. |
 | **Demo Material / Geometry Setup** | One-click shader material, generated-grid Geometry Nodes setup, or active-mesh displacement setup. |
 | **Animate Time** | Insert keyframes or a frame-based driver on the Time input. |
@@ -51,7 +51,7 @@ your `.blend`, append across files, or hand-tune further.
 |-------|-------------|
 | **Create** | Build and insert node groups. Duplicate policy (Reuse / Rebuild Safe / New Copy). |
 | **Demo Material** | Generate a complete material or Geometry Nodes modifier on the active object. Geometry demos can use a generated grid or the active mesh. |
-| **Presets** | Pick category → preset → Apply. Presets filter to the selected INL recipe when possible. Save your own as JSON. |
+| **Presets** | Search and filter a scrollable preset browser. Apply, Create + Apply, favorite, delete user presets, and save your own JSON presets. |
 | **Animation** | Keyframe or driver on Time.  Set frame range or speed. |
 | **Randomize / Mutate** | Randomize or nudge inputs with lock toggles. |
 | **Utilities** | Validate active group; clean unused INL groups. |
@@ -104,6 +104,11 @@ Wave Distortion, Detail, Roughness.
   modifier that references the original datablock.
 - Generated local artifacts are ignored by Git: `.DS_Store`, `__pycache__/`,
   Python bytecode, and `procedural_noise_lab.zip`.
+- Presets come from three sources: Python built-ins, JSON packs in
+  `procedural_noise_lab/preset_packs/`, and user presets saved to Blender's
+  user config directory. JSON packs use a top-level `presets` array with
+  `name`, `category`, `target`, `tags`, `description`, optional
+  `animation_hint`, and `values`.
 - Run `python -m compileall procedural_noise_lab scripts tests` for a local
   syntax check.
 - Run `blender --background --python tests/smoke.py` for Blender-side recipe,
@@ -125,6 +130,8 @@ procedural_noise_lab/
   recipe_animated_mask.py  # Animated Mask Noise recipe
   demo_material.py         # Demo material generator
   presets_data.py          # Built-in preset library
+  preset_library.py        # Preset browser aggregation, filters, favorites
+  preset_packs/            # JSON preset packs loaded into the browser
   presets_io.py            # JSON save / load for user presets
   animation.py             # Keyframe / driver helpers for Time
   randomize.py             # Randomize / mutate with lock groups

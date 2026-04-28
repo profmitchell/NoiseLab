@@ -7,6 +7,7 @@ from bpy.types import PropertyGroup
 
 from .formula_builder import OP_TYPES
 from .presets_data import PRESET_CATEGORIES, PRESETS, preset_names_for_category
+from .preset_library import category_items, recipe_items
 from .recipe_registry import DEMO_TARGET_ITEMS, recipe_for_group
 
 
@@ -42,6 +43,18 @@ class PNL_OperationItem(PropertyGroup):
     )
     param1: FloatProperty(name="Param 1", default=0.0, description="First parameter for the operation (often Scale or Input A)")
     param2: FloatProperty(name="Param 2", default=1.0, description="Second parameter for the operation (often Detail or Input B)")
+
+
+class PNL_PresetBrowserItem(PropertyGroup):
+    preset_id: StringProperty(name="Preset ID", default="")
+    name: StringProperty(name="Name", default="")
+    category: StringProperty(name="Category", default="")
+    target: StringProperty(name="Target", default="")
+    source: StringProperty(name="Source", default="")
+    tags: StringProperty(name="Tags", default="")
+    description: StringProperty(name="Description", default="")
+    animation_hint: StringProperty(name="Animation Hint", default="")
+    favorite: BoolProperty(name="Favorite", default=False)
 
 
 # ---------------------------------------------------------------------------
@@ -109,6 +122,52 @@ class PNL_Settings(PropertyGroup):
         items=_preset_name_items,
         description="Specific noise preset to load",
     )
+    preset_search: StringProperty(
+        name="Search",
+        default="",
+        description="Search preset names, tags, descriptions, categories, and targets",
+    )
+    preset_tag_filter: StringProperty(
+        name="Tag",
+        default="",
+        description="Filter presets by tag text",
+    )
+    preset_browser_category: EnumProperty(
+        name="Category",
+        items=category_items(),
+        default="ALL",
+        description="Preset browser category filter",
+    )
+    preset_browser_recipe: EnumProperty(
+        name="Recipe",
+        items=recipe_items(),
+        default="ALL",
+        description="Preset browser recipe filter",
+    )
+    preset_source: EnumProperty(
+        name="Source",
+        items=[
+            ("ALL", "All Sources", ""),
+            ("BUILTIN", "Built-in", ""),
+            ("PACK", "Packs", ""),
+            ("USER", "User", ""),
+        ],
+        default="ALL",
+        description="Preset browser source filter",
+    )
+    preset_favorites_only: BoolProperty(
+        name="Favorites",
+        default=False,
+        description="Show favorite presets only",
+    )
+    preset_browser_items: CollectionProperty(
+        type=PNL_PresetBrowserItem,
+        description="Filtered presets shown in the preset browser",
+    )
+    preset_browser_index: IntProperty(
+        default=0,
+        description="Selected preset browser row",
+    )
 
     # Animation
     anim_mode: EnumProperty(
@@ -147,7 +206,7 @@ class PNL_Settings(PropertyGroup):
     show_advanced: BoolProperty(name="Show Advanced", default=False, description="Toggle visibility of advanced settings")
 
 
-_classes = (PNL_OperationItem, PNL_Settings)
+_classes = (PNL_OperationItem, PNL_PresetBrowserItem, PNL_Settings)
 
 
 def register():
