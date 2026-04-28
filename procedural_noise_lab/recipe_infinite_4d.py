@@ -37,10 +37,10 @@ INPUT_SPEC = [
     ("Warp Scale",        "NodeSocketFloat",  2.0,             0.0, 20.0),
     ("Warp Speed",        "NodeSocketFloat",  0.25,            0.0, 4.0),
     # ---- Motion ----
-    ("Morph",             "NodeSocketFloat",  0.0,             -10.0, 10.0),
-    ("Drift X",           "NodeSocketFloat",  0.0,             -10.0, 10.0),
-    ("Drift Y",           "NodeSocketFloat",  0.0,             -10.0, 10.0),
-    ("Drift Z",           "NodeSocketFloat",  0.0,             -10.0, 10.0),
+    ("Morph",             "NodeSocketFloat",  0.0,             None, None),
+    ("Drift X",           "NodeSocketFloat",  0.0,             None, None),
+    ("Drift Y",           "NodeSocketFloat",  0.0,             None, None),
+    ("Drift Z",           "NodeSocketFloat",  0.0,             None, None),
     # ---- Shape ----
     ("Stretch X",         "NodeSocketFloat",  1.0,             0.01, 10.0),
     ("Stretch Y",         "NodeSocketFloat",  1.0,             0.01, 10.0),
