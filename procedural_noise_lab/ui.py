@@ -1,0 +1,236 @@
+"""Shader Editor N-panel for Infinite Noise Lab / Procedural Noise Lab.
+
+Organised into sub-panels so each section is collapsible and the sidebar
+stays tidy even with all features enabled.
+"""
+
+import bpy
+from bpy.types import Panel, UIList
+
+
+# =========================================================================
+# Shared base
+# =========================================================================
+class _PNL_PanelBase:
+    bl_space_type = 'NODE_EDITOR'
+    bl_region_type = 'UI'
+    bl_category = "Noise Lab"
+
+    @classmethod
+    def poll(cls, context):
+        return context.space_data and context.space_data.type == 'NODE_EDITOR'
+
+
+# =========================================================================
+# UIList for the formula builder
+# =========================================================================
+class PNL_UL_operations(UIList):
+    bl_idname = "PNL_UL_operations"
+
+    def draw_item(self, context, layout, data, item, icon,
+                  active_data, active_propname, index):
+        row = layout.row(align=True)
+        row.label(text=f"{index+1}.")
+        row.prop(item, "op", text="")
+        row.prop(item, "param1", text="P1")
+        row.prop(item, "param2", text="P2")
+
+
+# =========================================================================
+# 1  Create
+# =========================================================================
+class PNL_PT_create(_PNL_PanelBase, Panel):
+    bl_label = "Create"
+    bl_idname = "PNL_PT_create"
+
+    def draw(self, context):
+        layout = self.layout
+        s = context.scene.pnl_settings
+
+        layout.operator("pnl.build_infinite_4d", icon='FORCE_TURBULENCE')
+        layout.operator("pnl.build_domain_warp", icon='MOD_WARP')
+        layout.operator("pnl.build_animated_mask", icon='MOD_MASK')
+        layout.separator()
+        layout.operator("pnl.build_custom_4d", icon='TEXTURE')
+        layout.separator()
+        layout.prop(s, "duplicate_policy", text="If exists")
+
+
+# =========================================================================
+# 2  Demo Material
+# =========================================================================
+class PNL_PT_demo(_PNL_PanelBase, Panel):
+    bl_label = "Demo Material"
+    bl_idname = "PNL_PT_demo"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        layout = self.layout
+        s = context.scene.pnl_settings
+        layout.prop(s, "demo_target", text="")
+        layout.operator("pnl.demo_material", icon='MATERIAL')
+
+
+# =========================================================================
+# 3  Presets
+# =========================================================================
+class PNL_PT_presets(_PNL_PanelBase, Panel):
+    bl_label = "Presets"
+    bl_idname = "PNL_PT_presets"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        layout = self.layout
+        s = context.scene.pnl_settings
+
+        layout.prop(s, "preset_category", text="")
+        layout.prop(s, "preset_name", text="")
+
+        # Show preset description if available
+        from .presets_data import PRESETS
+        cat_presets = PRESETS.get(s.preset_category, [])
+        desc = ""
+        for p in cat_presets:
+            if p["name"] == s.preset_name:
+                desc = p.get("desc", "")
+                break
+        if desc:
+            box = layout.box()
+            box.scale_y = 0.7
+            box.label(text=desc, icon='INFO')
+
+        row = layout.row(align=True)
+        row.operator("pnl.apply_preset", icon='CHECKMARK')
+        row.operator("pnl.save_preset", icon='FILE_TICK')
+
+
+# =========================================================================
+# 4  Animation
+# =========================================================================
+class PNL_PT_animation(_PNL_PanelBase, Panel):
+    bl_label = "Animation"
+    bl_idname = "PNL_PT_animation"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        layout = self.layout
+        s = context.scene.pnl_settings
+
+        layout.prop(s, "anim_mode", expand=True)
+
+        if s.anim_mode == 'KEYFRAMES':
+            row = layout.row(align=True)
+            row.prop(s, "anim_start_frame")
+            row.prop(s, "anim_end_frame")
+        else:
+            layout.prop(s, "anim_speed")
+
+        row = layout.row(align=True)
+        row.operator("pnl.animate_time", icon='PLAY')
+        row.operator("pnl.clear_time", icon='CANCEL', text="Clear")
+
+
+# =========================================================================
+# 5  Randomise / Mutate
+# =========================================================================
+class PNL_PT_randomize(_PNL_PanelBase, Panel):
+    bl_label = "Randomize / Mutate"
+    bl_idname = "PNL_PT_randomize"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        layout = self.layout
+        s = context.scene.pnl_settings
+
+        layout.prop(s, "mutate_amount", slider=True)
+
+        col = layout.column(align=True)
+        row = col.row(align=True)
+        row.prop(s, "lock_scale", toggle=True)
+        row.prop(s, "lock_time", toggle=True)
+        row = col.row(align=True)
+        row.prop(s, "lock_warp", toggle=True)
+        row.prop(s, "lock_output", toggle=True)
+        row = col.row(align=True)
+        row.prop(s, "lock_animation", toggle=True)
+
+        row = layout.row(align=True)
+        row.operator("pnl.randomize", text="Randomize", icon='FILE_REFRESH').mutate = False
+        row.operator("pnl.randomize", text="Mutate", icon='RNA').mutate = True
+
+
+# =========================================================================
+# 6  Utilities
+# =========================================================================
+class PNL_PT_utilities(_PNL_PanelBase, Panel):
+    bl_label = "Utilities"
+    bl_idname = "PNL_PT_utilities"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        layout = self.layout
+        layout.operator("pnl.validate", icon='CHECKMARK')
+        layout.operator("pnl.cleanup", icon='TRASH')
+        layout.operator("pnl.duplicate_group", icon='DUPLICATE')
+        layout.separator()
+        layout.operator("pnl.open_docs", icon='URL')
+
+
+# =========================================================================
+# 7  Formula Builder (collapsed by default)
+# =========================================================================
+class PNL_PT_formula(_PNL_PanelBase, Panel):
+    bl_label = "Formula Builder"
+    bl_idname = "PNL_PT_formula"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        layout = self.layout
+        s = context.scene.pnl_settings
+
+        layout.prop(s, "group_name")
+
+        row = layout.row()
+        row.template_list(
+            "PNL_UL_operations", "",
+            s, "operations",
+            s, "active_index",
+            rows=4,
+        )
+        col = row.column(align=True)
+        col.operator("pnl.op_add", icon='ADD', text="")
+        col.operator("pnl.op_remove", icon='REMOVE', text="").index = -1
+        col.separator()
+        up = col.operator("pnl.op_move", icon='TRIA_UP', text="")
+        up.direction = 'UP'; up.index = -1
+        dn = col.operator("pnl.op_move", icon='TRIA_DOWN', text="")
+        dn.direction = 'DOWN'; dn.index = -1
+        col.separator()
+        col.operator("pnl.op_clear", icon='TRASH', text="")
+
+        layout.operator("pnl.build_formula", icon='NODETREE')
+
+
+# =========================================================================
+# Registration
+# =========================================================================
+_classes = (
+    PNL_UL_operations,
+    PNL_PT_create,
+    PNL_PT_demo,
+    PNL_PT_presets,
+    PNL_PT_animation,
+    PNL_PT_randomize,
+    PNL_PT_utilities,
+    PNL_PT_formula,
+)
+
+
+def register():
+    for c in _classes:
+        bpy.utils.register_class(c)
+
+
+def unregister():
+    for c in reversed(_classes):
+        bpy.utils.unregister_class(c)
