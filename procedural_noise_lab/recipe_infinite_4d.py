@@ -27,35 +27,35 @@ INPUT_SPEC = [
     ("Time",              "NodeSocketFloat",  0.0,             None, None),
     ("Seed",              "NodeSocketFloat",  0.0,             None, None),
     # ---- Noise ----
-    ("Scale",             "NodeSocketFloat",  5.0,             0.0, 50.0),
+    ("Scale",             "NodeSocketFloat",  5.0,             0.0, None),
     ("Detail",            "NodeSocketFloat",  8.0,             0.0, 15.0),
     ("Roughness",         "NodeSocketFloat",  0.55,            0.0, 1.0),
-    ("Lacunarity",        "NodeSocketFloat",  2.0,             0.0, 8.0),
-    ("Distortion",        "NodeSocketFloat",  0.0,             0.0, 10.0),
+    ("Lacunarity",        "NodeSocketFloat",  2.0,             0.0, None),
+    ("Distortion",        "NodeSocketFloat",  0.0,             None, None),
     # ---- Warp ----
-    ("Warp Amount",       "NodeSocketFloat",  1.0,             0.0, 8.0),
-    ("Warp Scale",        "NodeSocketFloat",  2.0,             0.0, 20.0),
-    ("Warp Speed",        "NodeSocketFloat",  0.25,            0.0, 4.0),
+    ("Warp Amount",       "NodeSocketFloat",  1.0,             None, None),
+    ("Warp Scale",        "NodeSocketFloat",  2.0,             0.0, None),
+    ("Warp Speed",        "NodeSocketFloat",  0.25,            None, None),
     # ---- Motion ----
     ("Morph",             "NodeSocketFloat",  0.0,             None, None),
     ("Drift X",           "NodeSocketFloat",  0.0,             None, None),
     ("Drift Y",           "NodeSocketFloat",  0.0,             None, None),
     ("Drift Z",           "NodeSocketFloat",  0.0,             None, None),
     # ---- Shape ----
-    ("Stretch X",         "NodeSocketFloat",  1.0,             0.01, 10.0),
-    ("Stretch Y",         "NodeSocketFloat",  1.0,             0.01, 10.0),
-    ("Stretch Z",         "NodeSocketFloat",  1.0,             0.01, 10.0),
-    ("Twist Amount",      "NodeSocketFloat",  0.0,             -10.0, 10.0),
+    ("Stretch X",         "NodeSocketFloat",  1.0,             None, None),
+    ("Stretch Y",         "NodeSocketFloat",  1.0,             None, None),
+    ("Stretch Z",         "NodeSocketFloat",  1.0,             None, None),
+    ("Twist Amount",      "NodeSocketFloat",  0.0,             None, None),
     ("Pulse Amount",      "NodeSocketFloat",  0.0,             0.0, 1.0),
     # ---- Detail layer ----
     ("Fine Detail Amount","NodeSocketFloat",  0.0,             0.0, 1.0),
-    ("Fine Detail Scale", "NodeSocketFloat",  3.0,             1.0, 10.0),
+    ("Fine Detail Scale", "NodeSocketFloat",  3.0,             0.0, None),
     # ---- Output shaping ----
-    ("Contrast",          "NodeSocketFloat",  1.2,             0.0, 8.0),
+    ("Contrast",          "NodeSocketFloat",  1.2,             0.0, None),
     ("Threshold",         "NodeSocketFloat",  0.5,             0.0, 1.0),
     ("Invert",            "NodeSocketFloat",  0.0,             0.0, 1.0),
-    ("Output Min",        "NodeSocketFloat",  0.0,             -2.0, 2.0),
-    ("Output Max",        "NodeSocketFloat",  1.0,             -2.0, 2.0),
+    ("Output Min",        "NodeSocketFloat",  0.0,             None, None),
+    ("Output Max",        "NodeSocketFloat",  1.0,             None, None),
 ]
 
 OUTPUT_SPEC = [

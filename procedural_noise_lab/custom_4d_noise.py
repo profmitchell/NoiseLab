@@ -57,9 +57,9 @@ def build_custom_4d_noise(tree_type='ShaderNodeTree'):
     new_input(tree, "Scale",       "NodeSocketFloat",  default=5.0)
     new_input(tree, "Detail",      "NodeSocketFloat",  default=8.0,  min_value=0.0, max_value=15.0)
     new_input(tree, "Roughness",   "NodeSocketFloat",  default=0.5,  min_value=0.0, max_value=1.0)
-    new_input(tree, "Lacunarity",  "NodeSocketFloat",  default=2.0,  min_value=0.0, max_value=8.0)
-    new_input(tree, "Distortion",  "NodeSocketFloat",  default=0.2,  min_value=0.0, max_value=4.0)
-    new_input(tree, "Contrast",    "NodeSocketFloat",  default=1.2,  min_value=0.0, max_value=8.0)
+    new_input(tree, "Lacunarity",  "NodeSocketFloat",  default=2.0,  min_value=0.0)
+    new_input(tree, "Distortion",  "NodeSocketFloat",  default=0.2)
+    new_input(tree, "Contrast",    "NodeSocketFloat",  default=1.2,  min_value=0.0)
     new_input(tree, "Seed Offset", "NodeSocketFloat",  default=0.0)
     new_input(tree, "Mix Amount",  "NodeSocketFloat",  default=0.35, min_value=0.0, max_value=1.0)
 

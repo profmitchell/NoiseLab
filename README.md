@@ -66,6 +66,12 @@ Distortion, Warp Amount, Warp Scale, Warp Speed, Morph, Drift X/Y/Z,
 Stretch X/Y/Z, Twist Amount, Pulse Amount, Fine Detail Amount/Scale,
 Contrast, Threshold, Invert, Output Min, Output Max.
 
+Motion, seed, drift, warp amount/speed, twist, stretch, distortion, and output
+remap controls are intentionally open-ended where Blender supports it, so they
+can be driven, keyframed, or pushed beyond the browser's randomization ranges.
+Factor-style controls such as roughness, thresholds, inversion, and mix amounts
+remain bounded.
+
 **Outputs:** Fac, Mask, Height, Color, Warped Vector.
 
 ### INL_Domain_Warped_Noise

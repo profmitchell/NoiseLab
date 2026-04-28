@@ -20,6 +20,21 @@ def fail(message):
     raise AssertionError(message)
 
 
+def assert_unbounded(group, names):
+    group_node = bpy.data.node_groups.new("probe_holder", group.bl_idname).nodes.new(
+        "ShaderNodeGroup" if group.bl_idname == "ShaderNodeTree" else "GeometryNodeGroup"
+    )
+    group_node.node_tree = group
+    for name in names:
+        if name not in group_node.inputs:
+            fail(f"{group.name} missing expected input {name}.")
+        socket = group_node.inputs[name]
+        lo = getattr(socket, "min_value", -1.0e38)
+        hi = getattr(socket, "max_value", 1.0e38)
+        if lo > -1.0e20 or hi < 1.0e20:
+            fail(f"{group.name}.{name} is not effectively unbounded: {lo}..{hi}")
+
+
 def main():
     addon = importlib.import_module("procedural_noise_lab")
     addon.register()
@@ -54,6 +69,23 @@ def main():
                 errors = validation.validate_group(group)
                 if errors:
                     fail(f"{group.name} validation failed: {errors}")
+                if recipe.key == "INFINITE_4D" and tree_type == "ShaderNodeTree":
+                    assert_unbounded(
+                        group,
+                        (
+                            "Time",
+                            "Seed",
+                            "Morph",
+                            "Drift X",
+                            "Drift Y",
+                            "Drift Z",
+                            "Warp Amount",
+                            "Warp Speed",
+                            "Twist Amount",
+                            "Output Min",
+                            "Output Max",
+                        ),
+                    )
 
         bpy.ops.object.select_all(action="SELECT")
         bpy.ops.object.delete()

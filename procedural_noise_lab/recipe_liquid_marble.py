@@ -19,12 +19,12 @@ INTERNAL_NAME = "INL_Liquid_Marble_Noise"
 
 INPUT_SPEC = [
     ("Vector",            "NodeSocketVector", (0.0, 0.0, 0.0), None, None),
-    ("Time",              "NodeSocketFloat",  0.0,             0.0, 10.0),
-    ("Scale",             "NodeSocketFloat",  5.0,             0.0, 50.0),
-    ("Warp Amount",       "NodeSocketFloat",  2.0,             0.0, 10.0),
-    ("Warp Scale",        "NodeSocketFloat",  1.5,             0.0, 10.0),
-    ("Wave Scale",        "NodeSocketFloat",  5.0,             0.0, 50.0),
-    ("Wave Distortion",   "NodeSocketFloat",  1.0,             0.0, 20.0),
+    ("Time",              "NodeSocketFloat",  0.0,             None, None),
+    ("Scale",             "NodeSocketFloat",  5.0,             0.0, None),
+    ("Warp Amount",       "NodeSocketFloat",  2.0,             None, None),
+    ("Warp Scale",        "NodeSocketFloat",  1.5,             0.0, None),
+    ("Wave Scale",        "NodeSocketFloat",  5.0,             0.0, None),
+    ("Wave Distortion",   "NodeSocketFloat",  1.0,             None, None),
     ("Detail",            "NodeSocketFloat",  2.0,             0.0, 15.0),
     ("Roughness",         "NodeSocketFloat",  0.5,             0.0, 1.0),
 ]

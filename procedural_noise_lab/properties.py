@@ -93,7 +93,6 @@ class PNL_Settings(PropertyGroup):
         name="Grid Size",
         default=2.0,
         min=0.1,
-        max=100.0,
         description="Generated grid size for Geometry Nodes demos",
     )
     geo_grid_vertices: IntProperty(
@@ -106,8 +105,6 @@ class PNL_Settings(PropertyGroup):
     geo_displacement_strength: FloatProperty(
         name="Strength",
         default=0.12,
-        min=-10.0,
-        max=10.0,
         description="Default normal displacement strength for Geometry Nodes demos",
     )
 
@@ -181,7 +178,7 @@ class PNL_Settings(PropertyGroup):
     )
     anim_start_frame: IntProperty(name="Start", default=1, min=0, description="Frame at which animation begins")
     anim_end_frame: IntProperty(name="End", default=120, min=1, description="Frame at which animation ends (keyframe mode only)")
-    anim_speed: FloatProperty(name="Speed", default=1.0, min=0.01, max=100.0, description="Multiplier for the animation speed over time")
+    anim_speed: FloatProperty(name="Speed", default=1.0, description="Multiplier for the animation speed over time")
 
     # Randomise / mutate
     mutate_amount: FloatProperty(name="Mutation %", default=0.2, min=0.01, max=1.0,

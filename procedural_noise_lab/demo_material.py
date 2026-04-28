@@ -121,9 +121,9 @@ def create_demo_geometry_setup(
     if mode == 'ACTIVE':
         new_input(tree, "Geometry", "NodeSocketGeometry")
     else:
-        new_input(tree, "Grid Size", "NodeSocketFloat", default=grid_size, min_value=0.1, max_value=100.0)
+        new_input(tree, "Grid Size", "NodeSocketFloat", default=grid_size, min_value=0.0)
         new_input(tree, "Grid Vertices", "NodeSocketInt", default=grid_vertices, min_value=2, max_value=1000)
-    new_input(tree, "Displacement Strength", "NodeSocketFloat", default=displacement_strength, min_value=-10.0, max_value=10.0)
+    new_input(tree, "Displacement Strength", "NodeSocketFloat", default=displacement_strength)
     new_input(tree, "Time", "NodeSocketFloat", default=0.0, min_value=None, max_value=None)
     new_input(tree, "Attribute Name", "NodeSocketString", default="inl_mask")
     new_output(tree, "Geometry", "NodeSocketGeometry")
