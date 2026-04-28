@@ -24,8 +24,8 @@ INPUT_SPEC = [
     # (name, type, default, soft_min, soft_max)
     # ---- Core ----
     ("Vector",            "NodeSocketVector", (0.0, 0.0, 0.0), None, None),
-    ("Time",              "NodeSocketFloat",  0.0,             0.0, 10.0),
-    ("Seed",              "NodeSocketFloat",  0.0,             0.0, 100.0),
+    ("Time",              "NodeSocketFloat",  0.0,             None, None),
+    ("Seed",              "NodeSocketFloat",  0.0,             None, None),
     # ---- Noise ----
     ("Scale",             "NodeSocketFloat",  5.0,             0.0, 50.0),
     ("Detail",            "NodeSocketFloat",  8.0,             0.0, 15.0),

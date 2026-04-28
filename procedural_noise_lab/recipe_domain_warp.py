@@ -16,8 +16,8 @@ INTERNAL_NAME = "INL_Domain_Warped_Noise"
 
 INPUT_SPEC = [
     ("Vector",            "NodeSocketVector", (0.0, 0.0, 0.0), None, None),
-    ("Time",              "NodeSocketFloat",  0.0,   0.0, 100.0),
-    ("Seed",              "NodeSocketFloat",  0.0,   0.0, 100.0),
+    ("Time",              "NodeSocketFloat",  0.0,   None, None),
+    ("Seed",              "NodeSocketFloat",  0.0,   None, None),
     ("Base Scale",        "NodeSocketFloat",  5.0,   0.1, 50.0),
     ("Base Detail",       "NodeSocketFloat",  8.0,   0.0, 15.0),
     ("Roughness",         "NodeSocketFloat",  0.5,   0.0, 1.0),
@@ -26,7 +26,7 @@ INPUT_SPEC = [
     ("Warp Scale",        "NodeSocketFloat",  3.0,   0.1, 50.0),
     ("Warp Detail",       "NodeSocketFloat",  4.0,   0.0, 15.0),
     ("Warp Amount",       "NodeSocketFloat",  1.5,   0.0, 10.0),
-    ("Warp Time Offset",  "NodeSocketFloat",  0.0,  -10.0, 10.0),
+    ("Warp Time Offset",  "NodeSocketFloat",  0.0,  None, None),
     ("Contrast",          "NodeSocketFloat",  1.2,   0.0, 8.0),
     ("Threshold",         "NodeSocketFloat",  0.5,   0.0, 1.0),
     ("Invert",            "NodeSocketFloat",  0.0,   0.0, 1.0),

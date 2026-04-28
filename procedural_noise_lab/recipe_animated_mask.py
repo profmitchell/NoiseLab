@@ -16,11 +16,11 @@ INTERNAL_NAME = "INL_Animated_Mask_Noise"
 
 INPUT_SPEC = [
     ("Vector",    "NodeSocketVector", (0.0, 0.0, 0.0), None, None),
-    ("Time",      "NodeSocketFloat",  0.0,  0.0,  100.0),
+    ("Time",      "NodeSocketFloat",  0.0,  None, None),
     ("Seed",      "NodeSocketFloat",  0.0,  0.0,  100.0),
     ("Scale",     "NodeSocketFloat",  5.0,  0.1,  50.0),
     ("Speed",     "NodeSocketFloat",  1.0,  0.0,  10.0),
-    ("Morph",     "NodeSocketFloat",  0.0, -10.0, 10.0),
+    ("Morph",     "NodeSocketFloat",  0.0, None, None),
     ("Detail",    "NodeSocketFloat",  8.0,  0.0,  15.0),
     ("Roughness", "NodeSocketFloat",  0.5,  0.0,  1.0),
     ("Threshold", "NodeSocketFloat",  0.5,  0.0,  1.0),
